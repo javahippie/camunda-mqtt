@@ -6,6 +6,7 @@
 package de.minautics.incubator.mqtt;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -28,13 +29,24 @@ public class MqttConfig {
 
     static final String MQTT_OUTBOUND_CHANNEL = "mqttOutboundChannel";
 
+    @Value("${mqtt.broker}")
+    private String mqttBroker;
+
+    @Value("${mqtt.username}")
+    private String mqttUser;
+
+    @Value("${mqtt.password}")
+    private String mqttPassword;
+
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setServerURIs(new String[]{"tcp://localhost:1883"});
-        //options.setUserName("username");
-        //options.setPassword("password".toCharArray());
+        options.setServerURIs(new String[]{mqttBroker});
+        if (null != mqttUser && !mqttUser.isEmpty()) {
+            options.setUserName(mqttUser);
+            options.setPassword(mqttPassword.toCharArray());
+        }
         factory.setConnectionOptions(options);
         return factory;
     }
@@ -45,9 +57,14 @@ public class MqttConfig {
     }
 
     @Bean
+    public MessageChannel mqttOutboundChannel() {
+        return new DirectChannel();
+    }
+
+    @Bean
     public MessageProducer mqttInbound() {
         MqttPahoMessageDrivenChannelAdapter adapter
-                = new MqttPahoMessageDrivenChannelAdapter("tcp://localhost:1883", "testClient", "plants/plant-b/+/temperature");
+                = new MqttPahoMessageDrivenChannelAdapter("readClient", mqttClientFactory(), "plants/plant-b/+/temperature");
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(1);
@@ -62,11 +79,6 @@ public class MqttConfig {
         messageHandler.setAsync(true);
         messageHandler.setDefaultTopic("testTopic");
         return messageHandler;
-    }
-
-    @Bean
-    public MessageChannel mqttOutboundChannel() {
-        return new DirectChannel();
     }
 
 }
