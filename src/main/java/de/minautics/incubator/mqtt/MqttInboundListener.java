@@ -28,8 +28,15 @@ public class MqttInboundListener {
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public MessageHandler handler() {
         return (Message<?> message) -> {
-            runtimeService.createSignalEvent("mqttInbound")
-                    .setVariables(Map.of("inboundMessage", message.getPayload()))
+
+            String mqttTopic = (String) message.getHeaders().get("mqtt_receivedTopic");
+            String mqttPayload = (String) message.getPayload();
+
+            runtimeService
+                    .createSignalEvent("mqttInbound")
+                    .setVariables(Map.of(
+                            "temperature", Long.parseLong(mqttPayload),
+                            "topic", mqttTopic))
                     .send();
         };
     }

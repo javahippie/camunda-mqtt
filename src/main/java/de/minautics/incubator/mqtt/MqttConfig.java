@@ -75,9 +75,9 @@ public class MqttConfig {
     @Bean
     @ServiceActivator(inputChannel = MQTT_OUTBOUND_CHANNEL)
     public MessageHandler mqttOutbound() {
-        MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler("testClient", mqttClientFactory());
+        MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler("writeClient", mqttClientFactory());
         messageHandler.setAsync(true);
-        messageHandler.setDefaultTopic("testTopic");
+        messageHandler.setDefaultTopic("plants/plant-b/camunda/temperature");
         return messageHandler;
     }
 
